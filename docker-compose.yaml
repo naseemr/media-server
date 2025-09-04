@@ -1,0 +1,124 @@
+services:
+  #Plex - used to display the media
+  #This can also be replaced by Emby/Jellyfin if you so choose
+  plex:
+    image: plexinc/pms-docker
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    ports:
+      - 32400:32400
+    volumes:
+      - /e/plex:/config
+      - /e/plex/transcode:/transcode
+      - /e/media/:/data
+        #  - /e/media/movie:/movies
+    restart: unless-stopped
+
+  #Radarr - used to find movies automatically
+  radarr:
+    image: lscr.io/linuxserver/radarr
+    container_name: radarr
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /e/radarr:/config
+      - /e/media/movie:/movies
+      - /e/download:/downloads
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+  #Sonarr - used to find tv shows automatically
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /e/sonarr:/config
+      - /e/media/series:/tv
+      - /e/download:/downloads
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  # - manages your Sonarr, Radarr and download client
+
+  #Overseer - allows users to request media on their own
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /e/overseerr:/config
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+
+  #Qbittorrent - torrenting software
+  #You can also use RuTorrent, Transmisson or Deluge
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=8694 #Make sure to port forward this port in your router so you can seed more effectively
+    volumes:
+      - /e/qbittorrent:/config
+      - /e/download:/downloads
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+
+
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /e/jackett:/config
+    ports:
+      - 9117:9117
+    restart: unless-stopped
+
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Europe/London
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped
+
+ # watchtower:
+  #  image: containrrr/watchtower
+  # volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock
+  #  command: --interval 300 # Checks for updates every 300 seconds (5 minutes)
+  #  environment:
+  #    - WATCHTOWER_CLEANUP=true # Removes old images after updating
+  #      #- WATCHTOWER_NOTIFICATIONS=slack # Example: sends notifications to Slack
+  #      #- SLACK_WEBHOOK_URL=your_slack_webhook_url
+  #  restart: unless-stopped
