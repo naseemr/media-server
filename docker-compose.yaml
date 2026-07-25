@@ -24,7 +24,7 @@ services:
       MYSQL_DATABASE: wpdb
       MYSQL_USER: wpuser
       MYSQL_PASSWORD: wppass
-      MYSQL_RANDOM_ROOT_PASSWORD: my1Sadia!
+      MYSQL_RANDOM_ROOT_PASSWORD: mypassword
     volumes:
       - ./db:/var/lib/mysql
 
